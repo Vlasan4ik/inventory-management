@@ -7,11 +7,11 @@ st.title("📦 Модель управління запасами")
 
 # --- Ввідні параметри ---
 st.sidebar.header("Параметри моделі")
-reorder_point = st.sidebar.number_input("Точка замовлення", min_value=0)
-order_quantity = st.sidebar.number_input("Кількість для замовлення", min_value=1)
-lead_time = st.sidebar.number_input("Час постачання (дні)", min_value=0)
-daily_demand = st.sidebar.number_input("Середній щоденний попит", min_value=0.0)
-demand_std = st.sidebar.number_input("Стандартне відхилення попиту", min_value=0.0)
+reorder_point = st.sidebar.number_input("Точка замовлення", min_value=0, value=20)
+order_quantity = st.sidebar.number_input("Кількість для замовлення", min_value=1, value=50)
+lead_time = st.sidebar.number_input("Час постачання (дні)", min_value=0, value=2)
+daily_demand = st.sidebar.number_input("Середній щоденний попит", min_value=0.0, value=10.0)
+demand_std = st.sidebar.number_input("Стандартне відхилення попиту", min_value=0.0, value=2.0)
 
 # --- Ініціалізація стану ---
 if "stock_level" not in st.session_state:
@@ -24,10 +24,17 @@ if "stockouts" not in st.session_state:
     st.session_state.stockouts = 0
 if "days_to_stockout" not in st.session_state:
     st.session_state.days_to_stockout = "-"
+if "day" not in st.session_state:
+    st.session_state.day = 0
 
 # --- Симуляція одного дня ---
 if st.button("Симулювати наступний день"):
+    st.session_state.day += 1
+    st.write(f"День симуляції: {st.session_state.day}")
+
     consumption = max(0, np.random.normal(daily_demand, demand_std))
+    st.write(f"Споживання за день: {consumption:.2f}")
+
     st.session_state.stock_level -= consumption
 
     # Запис історії запасів
@@ -37,6 +44,7 @@ if st.button("Симулювати наступний день"):
     if st.session_state.stock_level <= 0:
         st.session_state.stockouts += 1
         st.session_state.days_to_stockout = 0
+        st.write("Виник дефіцит запасів!")
     else:
         if isinstance(st.session_state.days_to_stockout, int):
             st.session_state.days_to_stockout += 1
@@ -50,6 +58,7 @@ if st.button("Симулювати наступний день"):
             "кількість": order_quantity
         })
         st.session_state.stock_level += order_quantity
+        st.write(f"Зроблено замовлення: {order_quantity} од.")
 
 # --- Вивід поточного рівня запасів ---
 st.subheader("📊 Поточний рівень запасів:")
